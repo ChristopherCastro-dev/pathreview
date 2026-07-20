@@ -17,3 +17,50 @@ I can explain this issue without re-reading it: structlog isn't wired into stdli
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & Planning: Issue #159
+
+**Issue:** structlog output is not captured by pytest caplog — log assertions fail suite-wide
+
+**Reproduction steps:**
+1. Ran the failing test directly:
+```
+   pytest tests/unit/test_batch_processor.py::TestBatchEmbeddingProcessor::test_empty_chunks_list_returns_empty -s
+```
+2. Confirmed the test fails: `caplog.text` is empty even though structlog visibly
+   printed the expected warning to stdout during the test run.
+
+**Observed output:**
+```
+tests/unit/test_batch_processor.py 2026-07-19 19:52:12 [warning  ] Empty chunks list provided to BatchEmbeddingProcessor
+F
+=================================== FAILURES ====================================
+_______ TestBatchEmbeddingProcessor.test_empty_chunks_list_returns_empty ________
+
+    def test_empty_chunks_list_returns_empty(self, processor, caplog):
+        """Test that empty chunks list logs warning and returns empty list."""
+        result = processor.process([])
+
+        assert result == []
+        # Should log a warning
+>       assert "Empty chunks list" in caplog.text or any(
+            "empty" in record.message.lower() for record in caplog.records
+        )
+E       AssertionError: assert ('Empty chunks list' in '' or False)
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0x1052ef4d0>.text
+E        +  and   False = any(<generator object ...>)
+
+tests/unit/test_batch_processor.py:42: AssertionError
+FAILED tests/unit/test_batch_processor.py::TestBatchEmbeddingProcessor::test_empty_chunks_list_returns_empty - AssertionError: assert ('Empty chunks list' in '' or False)
+1 failed in 0.39s
+```
+
+**Root cause:**
+`structlog` emits the warning ("Empty chunks list provided to BatchEmbeddingProcessor")
+and it clearly prints to stdout. But it's not routed through Python's standard `logging`
+module, which is what pytest's `caplog` fixture hooks into. As a result, `caplog.text`
+and `caplog.records` both stay empty even though the log event genuinely fired. The fix
+needs to configure structlog (likely in `tests/conftest.py`) to route through stdlib
+`logging`, e.g. via `structlog.stdlib.LoggerFactory` and a `ProcessorFormatter`.
+
+**Status:** Reproduced locally with real output. Root cause confirmed. Proceeding to PLAN.md.
