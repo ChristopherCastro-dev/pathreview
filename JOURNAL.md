@@ -18,14 +18,28 @@ I can explain this issue without re-reading it: structlog isn't wired into stdli
 
 **Cohort ledger:** [x] Issue added to cohort ledger
 
-## Week 8 — Reproduction & Planning: Issue #159
+## Week 8 — Reproduction & solution planning
 
-**Issue:** structlog output is not captured by pytest caplog — log assertions fail suite-wide
+**Reproduction commit link:** https://github.com/ChristopherCastro-dev/pathreview/commit/2f92a1d
+
+**Reproduction summary:**
+Ran the failing test directly and confirmed `caplog.text` stays empty even though structlog visibly prints the expected warning to stdout. Root cause: `configure_logging()` in `core/logging.py` is never called during tests, so structlog isn't wired into stdlib `logging`, which is what `caplog` hooks into.
+
+**PLAN.md link:** https://github.com/ChristopherCastro-dev/pathreview/blob/fix/159-structlog-caplog-config/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded this week.
+
+**Blockers or open questions:**
+None currently — root cause is confirmed and the fix approach (adding an autouse fixture in `tests/conftest.py` that calls `configure_logging()`) is scoped. Will confirm during implementation whether `cache_logger_on_first_use` needs to be `False` for tests.
+
+---
+
+**Detailed reproduction (issue #159):**
 
 **Reproduction steps:**
 1. Ran the failing test directly:
 ```
-   pytest tests/unit/test_batch_processor.py::TestBatchEmbeddingProcessor::test_empty_chunks_list_returns_empty -s
+pytest tests/unit/test_batch_processor.py::TestBatchEmbeddingProcessor::test_empty_chunks_list_returns_empty -s
 ```
 2. Confirmed the test fails: `caplog.text` is empty even though structlog visibly
    printed the expected warning to stdout during the test run.
