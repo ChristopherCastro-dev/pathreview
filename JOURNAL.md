@@ -78,3 +78,18 @@ needs to configure structlog (likely in `tests/conftest.py`) to route through st
 `logging`, e.g. via `structlog.stdlib.LoggerFactory` and a `ProcessorFormatter`.
 
 **Status:** Reproduced locally with real output. Root cause confirmed. Proceeding to PLAN.md.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Implemented the fix from PLAN.md: added an autouse pytest fixture (`configure_test_logging`) in `tests/conftest.py` that calls `configure_logging()` before each test, so structlog routes through stdlib `logging` and becomes visible to `caplog`. Confirmed the previously-failing test (`test_empty_chunks_list_returns_empty`) now passes.
+
+Ran full verification before finalizing: `make test-unit` shows 52 failed / 376 passed, with zero new failures introduced (the 52 pre-existing failures are identical with or without my change — confirmed via `git stash` comparison). `make check` reports 182 pre-existing lint errors across unrelated files (`safety/`, various test files) — none in `tests/conftest.py`, the only file I touched. Both `make check` and `make test-unit` were re-run after committing to confirm no new issues.
+
+**Next steps:**
+Open a draft PR with a full description (What changed / Root cause / How to test / Pre-existing issues), and share it in the peer review Slack channel for feedback.
+
+**Blockers:**
+None currently.
