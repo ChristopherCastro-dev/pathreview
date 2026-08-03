@@ -110,3 +110,34 @@ No new test file was needed — this fix resolves a test-environment configurati
 (Both confirmed to introduce zero new failures — 52 pre-existing test failures and 182 pre-existing lint errors exist across unrelated files, documented in the PR description.)
 
 **Draft PR feedback received from:** None — peer review Slack channel was not accessible, so this PR was self-reviewed against the course's pre-submission checklist and marked ready for review directly.
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+No feedback received. The peer review Slack channel wasn't accessible (as noted in Week 9), and no reviewer comments have come in on PR #1 itself either - it currently shows 0 reviews.
+
+**How you responded:**
+N/A - no feedback arrived, so no further changes were made beyond the self-review already documented in Week 9 (`make check` and `make test-unit` both confirmed zero new failures via `git stash` comparison).
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+Confirming that my fix didn't introduce new problems took more work than expected. With 52 pre-existing test failures and 182 pre-existing lint errors already in the codebase, a normal test run wouldn't tell me anything useful — I had to isolate my change's effect from the existing noise using `git stash` to compare before/after, rather than just checking for a clean pass.
+
+**What did you learn about working in a large codebase?**
+The biggest shift was learning to prove that "pre-existing" failures are actually pre-existing, instead of assuming it. In my own projects, a failing test means I broke something. Here, it might have nothing to do with my change, and demonstrating that (not just asserting it) turned out to be real engineering work, not a side task.
+
+**How did AI tools help — and where did they fall short?**
+I used AI while debugging why `caplog` wasn't catching structlog's output, but it pointed me toward the wrong cause at first — I ended up figuring out the actual root cause myself: `configure_logging()` in `core/logging.py` was never being called during tests, so structlog fell back to its own renderer instead of routing through stdlib `logging`, which is what `caplog` hooks into. More broadly, I used AI to understand the codebase and minimize how much I had to read directly, so I could work more efficiently — though on this specific bug, it steered me wrong before I found the answer myself.
+
+**What would you do differently if you started over?**
+I probably could have pushed Claude harder to get it pointed at the right answer instead of moving on — I got annoyed and tired of going back and forth with it, so I ended up just working it out myself. In hindsight, sticking with it a bit longer or being more precise about what I was asking might have gotten me to the answer faster than abandoning the AI and starting from scratch.
+
+**What are you most proud of from this module?**
+Figuring out that Claude's suggestion for the `caplog` issue wasn't actually correct, and working out the real root cause myself. It would've been easy to just run with what the AI suggested, but recognizing it didn't fit and going back into `core/logging.py` and `conftest.py` to trace the actual cause — that `configure_logging()` was never called during tests — felt like the most "real" engineering moment of this module.
